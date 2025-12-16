@@ -1068,8 +1068,8 @@ static bool url_match_auth(struct connectdata *conn,
 }
 
 #ifndef CURL_DISABLE_WEBSOCKETS
-/* Return true if the scheme/protocol/family of `conn` can be used to upgrade to the websocket
- * scheme of `needle` */
+/* Return true if the scheme/protocol/family of `conn` can be used to upgrade
+ * to the websocket scheme of `needle` */
 static bool websocket_compatible_protocols(struct connectdata *needle,
                                            struct connectdata *conn)
 {
@@ -1083,8 +1083,9 @@ static bool websocket_compatible_protocols(struct connectdata *needle,
   if(curl_strequal(needle->handler->scheme, "ws") &&
      conn->handler->protocol & CURLPROTO_HTTP) {
     return TRUE;
-  } else if (curl_strequal(needle->handler->scheme, "wss") &&
-             conn->handler->protocol & CURLPROTO_HTTPS) {
+  }
+  else if(curl_strequal(needle->handler->scheme, "wss") &&
+          conn->handler->protocol & CURLPROTO_HTTPS) {
     return TRUE;
   }
   return FALSE;
@@ -3388,9 +3389,11 @@ static void conn_meta_freeentry(void *p)
 }
 
 #ifndef CURL_DISABLE_WEBSOCKETS
-/* If the scheme needs to be updated due to a reused conn.  At the moment only if a websocket
- * is reusing an http connection. */
-static CURLcode update_scheme_if_necessary(struct Curl_easy *data, struct connectdata *conn, struct connectdata *existing)
+/* If the scheme needs to be updated due to a reused conn.  At the moment only
+ * if a websocket is reusing an http connection. */
+static CURLcode update_scheme_if_necessary(struct Curl_easy *data,
+                                           struct connectdata *conn,
+                                           struct connectdata *existing)
 {
   CURLcode result = CURLE_OK;
   if(websocket_compatible_protocols(conn, existing)) {
