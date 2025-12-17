@@ -28,21 +28,21 @@
 static int t2724_run_multi_loop(CURLM *multi)
 {
   int still_running = 0;
-  CURLMcode mc;
+  CURLMcode mresult;
 
   do {
-    mc = curl_multi_perform(multi, &still_running);
-    if(mc != CURLM_OK) {
+    mresult = curl_multi_perform(multi, &still_running);
+    if(mresult != CURLM_OK) {
       curl_mfprintf(stderr, "curl_multi_perform failed: %s\n",
-                    curl_multi_strerror(mc));
+                    curl_multi_strerror(mresult));
       return 1;
     }
 
     if(still_running) {
-      mc = curl_multi_wait(multi, NULL, 0, TEST_HANG_TIMEOUT, NULL);
-      if(mc != CURLM_OK) {
+      mresult = curl_multi_wait(multi, NULL, 0, TEST_HANG_TIMEOUT, NULL);
+      if(mresult != CURLM_OK) {
         curl_mfprintf(stderr, "curl_multi_wait failed: %s\n",
-                      curl_multi_strerror(mc));
+                      curl_multi_strerror(mresult));
         return 1;
       }
     }
@@ -64,7 +64,7 @@ static CURLcode test_lib2724(const char *URL)
   CURL *easy_ws_refused = NULL;
   CURL *easy_http_ok = NULL;
   CURLM *multi = NULL;
-  CURLcode res = 0;
+  CURLcode result = 0;
   long response_code = 0;
   CURLMsg *msg;
   int msgs_in_queue;
@@ -93,7 +93,7 @@ static CURLcode test_lib2724(const char *URL)
   multi_add_handle(multi, easy_ws_refused);
 
   if(t2724_run_multi_loop(multi)) {
-    res = 1;
+    result = 1;
     goto test_cleanup;
   }
 
@@ -108,13 +108,13 @@ static CURLcode test_lib2724(const char *URL)
     if(response_code == 101) {
       curl_mfprintf(stderr, "TEST FAILURE: Request 1 returned 101 "
                     "(WebSocket Upgrade).\n");
-      res = 1;
+      result = 1;
     }
   }
   else {
     curl_mfprintf(stderr, "TEST FAILURE: Request 1 did not complete or"
                   "multi_info_read failed.\n");
-    res = 1;
+    result = 1;
   }
 
   multi_remove_handle(multi, easy_ws_refused);
@@ -136,7 +136,7 @@ static CURLcode test_lib2724(const char *URL)
 
   /* Perform the second request using the same multi handle */
   if(t2724_run_multi_loop(multi)) {
-    res = 1;
+    result = 1;
     goto test_cleanup;
   }
 
@@ -145,7 +145,7 @@ static CURLcode test_lib2724(const char *URL)
     if(msg->data.result != CURLE_OK) {
       curl_mfprintf(stderr, "TEST FAILURE: Request 2 transfer failed: %s\n",
                     curl_easy_strerror(msg->data.result));
-      res = 1;
+      result = 1;
     }
 
     curl_easy_getinfo(easy_http_ok, CURLINFO_RESPONSE_CODE, &response_code);
@@ -156,12 +156,12 @@ static CURLcode test_lib2724(const char *URL)
     if(response_code != 200) {
       curl_mfprintf(stderr, "TEST FAILURE: Request 2 returned %ld,"
                     "expected 200.\n", response_code);
-      res = 1;
+      result = 1;
     }
   }
   else {
     curl_mfprintf(stderr, "TEST FAILURE: Request 2 failed.\n");
-    res = 1;
+    result = 1;
   }
 
 test_cleanup:
@@ -173,7 +173,7 @@ test_cleanup:
     curl_multi_cleanup(multi);
   curl_global_cleanup();
 
-  return res;
+  return result;
 #else
   NO_SUPPORT_BUILT_IN
 #endif
