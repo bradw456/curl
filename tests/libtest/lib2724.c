@@ -64,7 +64,7 @@ static CURLcode test_lib2724(const char *URL)
   CURL *easy_ws_refused = NULL;
   CURL *easy_http_ok = NULL;
   CURLM *multi = NULL;
-  CURLcode result = 0;
+  CURLcode result = CURLE_OK;
   long response_code = 0;
   CURLMsg *msg;
   int msgs_in_queue;
@@ -93,7 +93,7 @@ static CURLcode test_lib2724(const char *URL)
   multi_add_handle(multi, easy_ws_refused);
 
   if(t2724_run_multi_loop(multi)) {
-    result = 1;
+    result = TEST_ERR_MULTI;
     goto test_cleanup;
   }
 
@@ -108,13 +108,13 @@ static CURLcode test_lib2724(const char *URL)
     if(response_code == 101) {
       curl_mfprintf(stderr, "TEST FAILURE: Request 1 returned 101 "
                     "(WebSocket Upgrade).\n");
-      result = 1;
+      result = TEST_ERR_FAILURE;
     }
   }
   else {
     curl_mfprintf(stderr, "TEST FAILURE: Request 1 did not complete or"
                   "multi_info_read failed.\n");
-    result = 1;
+    result = TEST_ERR_FAILURE;
   }
 
   multi_remove_handle(multi, easy_ws_refused);
@@ -136,7 +136,7 @@ static CURLcode test_lib2724(const char *URL)
 
   /* Perform the second request using the same multi handle */
   if(t2724_run_multi_loop(multi)) {
-    result = 1;
+    result = TEST_ERR_MULTI;
     goto test_cleanup;
   }
 
@@ -145,7 +145,7 @@ static CURLcode test_lib2724(const char *URL)
     if(msg->data.result != CURLE_OK) {
       curl_mfprintf(stderr, "TEST FAILURE: Request 2 transfer failed: %s\n",
                     curl_easy_strerror(msg->data.result));
-      result = 1;
+      result = TEST_ERR_FAILURE;
     }
 
     curl_easy_getinfo(easy_http_ok, CURLINFO_RESPONSE_CODE, &response_code);
@@ -156,12 +156,12 @@ static CURLcode test_lib2724(const char *URL)
     if(response_code != 200) {
       curl_mfprintf(stderr, "TEST FAILURE: Request 2 returned %ld,"
                     "expected 200.\n", response_code);
-      result = 1;
+      result = TEST_ERR_FAILURE;
     }
   }
   else {
     curl_mfprintf(stderr, "TEST FAILURE: Request 2 failed.\n");
-    result = 1;
+    result = TEST_ERR_FAILURE;
   }
 
 test_cleanup:
