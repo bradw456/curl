@@ -1075,7 +1075,7 @@ static bool websocket_compatible_protocols(struct connectdata *needle,
 {
   /* WebSockets can upgrade an HTTP/1.1 connection */
   if(!(get_protocol_family(conn->handler) & PROTO_FAMILY_HTTP) &&
-    Curl_conn_http_version(NULL, conn) != 11) {
+     Curl_conn_http_version(NULL, conn) != 11) {
     return FALSE;
   }
 
