@@ -61,8 +61,8 @@ static CURLcode test_lib2724(const char *URL)
    * error.  Send another request with the same multi handle and therefore
    * the same connection pool.  Verify that the second request succeeds and
    * reuses the previous connection. */
-  CURL *easy_ws_refused = NULL;
-  CURL *easy_http_ok = NULL;
+  CURL *curl_ws_refused = NULL;
+  CURL *curl_http_ok = NULL;
   CURLM *multi = NULL;
   CURLcode result = CURLE_OK;
   long response_code = 0;
@@ -79,18 +79,17 @@ static CURLcode test_lib2724(const char *URL)
 
   /* 1. Setup WebSocket upgrade refused (expect non-101) */
 
-  easy_init(easy_ws_refused);
+  easy_init(curl_ws_refused);
 
   curl_msnprintf(target_url, sizeof(target_url), "ws://%s:%s/path/ws/2724",
                  address, port);
   target_url[sizeof(target_url) - 1] = '\0';
-  easy_setopt(easy_ws_refused, CURLOPT_URL, target_url);
-  easy_setopt(easy_ws_refused, CURLOPT_VERBOSE, 1L);
+  easy_setopt(curl_ws_refused, CURLOPT_URL, target_url);
+  easy_setopt(curl_ws_refused, CURLOPT_VERBOSE, 1L);
   /* Prevents a refused upgrade from being treated as an error. */
-  easy_setopt(easy_ws_refused, CURLOPT_WS_OPTIONS,
-              (long)CURLWS_UPGRD_REFUSED_OK);
+  easy_setopt(curl_ws_refused, CURLOPT_WS_OPTIONS, CURLWS_UPGRD_REFUSED_OK);
 
-  multi_add_handle(multi, easy_ws_refused);
+  multi_add_handle(multi, curl_ws_refused);
 
   if(t2724_run_multi_loop(multi)) {
     result = TEST_ERR_MULTI;
@@ -98,9 +97,9 @@ static CURLcode test_lib2724(const char *URL)
   }
 
   msg = curl_multi_info_read(multi, &msgs_in_queue);
-  if(msg && msg->easy_handle == easy_ws_refused
+  if(msg && msg->easy_handle == curl_ws_refused
      && msg->msg == CURLMSG_DONE) {
-    curl_easy_getinfo(easy_ws_refused, CURLINFO_RESPONSE_CODE, &response_code);
+    curl_easy_getinfo(curl_ws_refused, CURLINFO_RESPONSE_CODE, &response_code);
 
     curl_mfprintf(stderr, "Request 1 (WS Fail) completed. HTTP Code: %ld.\n",
                   response_code);
@@ -117,22 +116,22 @@ static CURLcode test_lib2724(const char *URL)
     result = TEST_ERR_FAILURE;
   }
 
-  multi_remove_handle(multi, easy_ws_refused);
-  curl_easy_cleanup(easy_ws_refused);
-  easy_ws_refused = NULL;
+  multi_remove_handle(multi, curl_ws_refused);
+  curl_easy_cleanup(curl_ws_refused);
+  curl_ws_refused = NULL;
 
   /* 2. Follow up with an http request. Expect to reuse the connection. */
 
-  easy_init(easy_http_ok);
+  easy_init(curl_http_ok);
 
   /* Set URL to a standard HTTP target, expected to succeed with 200 */
   curl_msnprintf(target_url, sizeof(target_url), "http://%s:%s/path/http/2724",
                  address, port);
   target_url[sizeof(target_url) - 1] = '\0';
-  easy_setopt(easy_http_ok, CURLOPT_URL, target_url);
-  easy_setopt(easy_http_ok, CURLOPT_VERBOSE, 1L);
+  easy_setopt(curl_http_ok, CURLOPT_URL, target_url);
+  easy_setopt(curl_http_ok, CURLOPT_VERBOSE, 1L);
 
-  multi_add_handle(multi, easy_http_ok);
+  multi_add_handle(multi, curl_http_ok);
 
   /* Perform the second request using the same multi handle */
   if(t2724_run_multi_loop(multi)) {
@@ -141,14 +140,14 @@ static CURLcode test_lib2724(const char *URL)
   }
 
   msg = curl_multi_info_read(multi, &msgs_in_queue);
-  if(msg && msg->easy_handle == easy_http_ok && msg->msg == CURLMSG_DONE) {
+  if(msg && msg->easy_handle == curl_http_ok && msg->msg == CURLMSG_DONE) {
     if(msg->data.result != CURLE_OK) {
       curl_mfprintf(stderr, "TEST FAILURE: Request 2 transfer failed: %s\n",
                     curl_easy_strerror(msg->data.result));
       result = TEST_ERR_FAILURE;
     }
 
-    curl_easy_getinfo(easy_http_ok, CURLINFO_RESPONSE_CODE, &response_code);
+    curl_easy_getinfo(curl_http_ok, CURLINFO_RESPONSE_CODE, &response_code);
 
     curl_mfprintf(stderr, "Request 2 (HTTP OK) completed. HTTP Code: %ld.\n",
                   response_code);
@@ -165,14 +164,14 @@ static CURLcode test_lib2724(const char *URL)
   }
 
 test_cleanup:
-  if(easy_ws_refused)
-    curl_multi_remove_handle(multi, easy_ws_refused);
-  if(easy_ws_refused)
-    curl_easy_cleanup(easy_ws_refused);
-  if(easy_http_ok)
-    curl_multi_remove_handle(multi, easy_http_ok);
-  if(easy_http_ok)
-    curl_easy_cleanup(easy_http_ok);
+  if(curl_ws_refused)
+    curl_multi_remove_handle(multi, curl_ws_refused);
+  if(curl_ws_refused)
+    curl_easy_cleanup(curl_ws_refused);
+  if(curl_http_ok)
+    curl_multi_remove_handle(multi, curl_http_ok);
+  if(curl_http_ok)
+    curl_easy_cleanup(curl_http_ok);
   if(multi)
     curl_multi_cleanup(multi);
   curl_global_cleanup();
