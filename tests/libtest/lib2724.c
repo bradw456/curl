@@ -165,6 +165,10 @@ static CURLcode test_lib2724(const char *URL)
   }
 
 test_cleanup:
+  if(easy_ws_refused)
+    curl_multi_remove_handle(multi, easy_ws_refused);
+  if(easy_ws_refused)
+    curl_easy_cleanup(easy_ws_refused);
   if(easy_http_ok)
     curl_multi_remove_handle(multi, easy_http_ok);
   if(easy_http_ok)
