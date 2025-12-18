@@ -56,7 +56,7 @@ version 8.14.0.
 Allow a WebSocket upgrade to be refused by the server without causing
 an error. The response is processed as a normal http(s) response. In this
 case the caller must check the response status code to know if the upgrade
-succeeded. This feature is added with version 8.18.0.
+succeeded. This feature is added with version 8.19.0.
 
 # DEFAULT
 
